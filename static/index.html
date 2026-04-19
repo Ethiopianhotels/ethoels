@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ethiopian Hotel Reviews</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        .header {
+            background: #0f2a4f;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 { font-size: 1.8rem; margin-bottom: 8px; }
+        .header p { opacity: 0.9; font-size: 0.9rem; }
+        .search-section {
+            padding: 25px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: center;
+        }
+        .search-box {
+            display: flex;
+            gap: 12px;
+            max-width: 500px;
+            margin: 0 auto;
+            flex-wrap: wrap;
+        }
+        #searchInput {
+            flex: 1;
+            padding: 14px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 40px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+        #searchBtn {
+            background: #1e3c72;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .quick-cities {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+        }
+        .city-chip {
+            background: #e2e8f0;
+            padding: 6px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: 0.2s;
+        }
+        .city-chip:active { background: #1e3c72; color: white; }
+        .hotels-grid {
+            padding: 25px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+        .hotel-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 1px solid #eef2ff;
+        }
+        .hotel-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            background: #cbd5e1;
+        }
+        .hotel-info { padding: 16px; }
+        .hotel-name { font-size: 1.1rem; font-weight: 700; color: #1e3c72; margin-bottom: 5px; }
+        .hotel-address { color: #64748b; font-size: 0.75rem; margin-bottom: 8px; }
+        .rating { display: inline-block; background: #f1f5f9; padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; margin-bottom: 12px; }
+        .reviews-section { margin-top: 12px; border-top: 1px solid #e2e8f0; padding-top: 12px; }
+        .review-item { background: #f8fafc; padding: 10px; border-radius: 10px; margin-bottom: 8px; }
+        .review-header { display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 4px; }
+        .review-author { font-weight: 600; }
+        .review-text { font-size: 0.8rem; color: #334155; }
+        .review-date { font-size: 0.7rem; color: #94a3b8; margin-top: 4px; }
+        .loading, .no-results { text-align: center; padding: 50px; color: #64748b; }
+        .spinner {
+            border: 3px solid #e2e8f0;
+            border-top: 3px solid #1e3c72;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .footer { text-align: center; padding: 16px; background: #f8fafc; color: #64748b; font-size: 0.7rem; }
+        .error { color: #dc2626; background: #fee2e2; padding: 15px; border-radius: 12px; margin: 20px; text-align: center; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🏨 Ethiopian Hotel Reviews</h1>
+        <p>Real guest feedback from Google Maps</p>
+    </div>
+    <div class="search-section">
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Enter city name..." value="Addis Ababa">
+            <button id="searchBtn">🔍 Search</button>
+        </div>
+        <div class="quick-cities">
+            <div class="city-chip" data-city="Addis Ababa">Addis Ababa</div>
+            <div class="city-chip" data-city="Bahir Dar">Bahir Dar</div>
+            <div class="city-chip" data-city="Lalibela">Lalibela</div>
+            <div class="city-chip" data-city="Gondar">Gondar</div>
+            <div class="city-chip" data-city="Hawassa">Hawassa</div>
+            <div class="city-chip" data-city="Axum">Axum</div>
+        </div>
+    </div>
+    <div id="hotelsContainer" class="hotels-grid">
+        <div class="loading"><div class="spinner"></div><p>Enter a city and tap Search</p></div>
+    </div>
+    <div class="footer"><p>📊 Powered by Apify Google Maps Scraper</p></div>
+</div>
+
+<script>
+    async function searchHotels() {
+        const query = document.getElementById('searchInput').value.trim();
+        if (!query) return;
+        const container = document.getElementById('hotelsContainer');
+        container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Fetching reviews...</p></div>';
+        try {
+            const response = await fetch(`/api/search?q=${encodeURIComponent(query)} hotels`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const hotels = await response.json();
+            if (hotels.error) { container.innerHTML = `<div class="error">❌ ${hotels.error}</div>`; return; }
+            if (!hotels.length) { container.innerHTML = '<div class="no-results">😞 No hotels found.</div>'; return; }
+            displayHotels(hotels);
+        } catch (err) {
+            container.innerHTML = `<div class="error">❌ Error: ${err.message}</div>`;
+        }
+    }
+    function displayHotels(hotels) {
+        const container = document.getElementById('hotelsContainer');
+        container.innerHTML = hotels.map(hotel => `
+            <div class="hotel-card">
+                <img class="hotel-image" src="${hotel.image || 'https://via.placeholder.com/400x180?text=Hotel'}" onerror="this.src='https://via.placeholder.com/400x180?text=No+Image'">
+                <div class="hotel-info">
+                    <h3 class="hotel-name">${escapeHtml(hotel.name)}</h3>
+                    <div class="hotel-address">📍 ${escapeHtml(hotel.address)}</div>
+                    <div class="rating">⭐ ${hotel.rating || 'N/A'} (${hotel.reviewsCount || 0} reviews)</div>
+                    <div class="reviews-section">
+                        <strong>📝 Recent reviews</strong>
+                        ${hotel.reviews.map(rev => `
+                            <div class="review-item">
+                                <div class="review-header"><span class="review-author">${escapeHtml(rev.author)}</span><span>⭐ ${rev.rating}</span></div>
+                                <div class="review-text">"${escapeHtml(rev.text)}"</div>
+                                <div class="review-date">${rev.date}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+    function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
+    document.getElementById('searchBtn').addEventListener('click', searchHotels);
+    document.getElementById('searchInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') searchHotels(); });
+    document.querySelectorAll('.city-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            document.getElementById('searchInput').value = chip.getAttribute('data-city');
+            searchHotels();
+        });
+    });
+</script>
+</body>
+</html>
